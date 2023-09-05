@@ -1,3 +1,4 @@
+[![Pylint](https://github.com/formeo/music_recognition/actions/workflows/pylint.yml/badge.svg)](https://github.com/formeo/music_recognition/actions/workflows/pylint.yml)
 # Скрипты распознавания музыки
 
 Позволяют понять что у вас за старые  mp3 на компе валяются
