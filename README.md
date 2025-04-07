@@ -4,6 +4,8 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+[![Python package](https://github.com/formeo/music_recognition/actions/workflows/python-package.yml/badge.svg)](https://github.com/formeo/music_recognition/actions/workflows/python-package.yml)
+
 Music Recognition — это инструмент для распознавания музыки на основе аудиофайлов или потокового аудио. Проект позволяет идентифицировать композиции, извлекать метаданные и анализировать аудио с использованием современных технологий.
 
 ## Оглавление
