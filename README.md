@@ -29,7 +29,7 @@ Music Recognition — это программное обеспечение, ко
 
 - **Распознавание музыки**: Идентификация треков по фрагментам аудио.
 - **Извлечение метаданных**: Получение информации о композиции (название, исполнитель, альбом).
-- **Анализ аудио**: Определение темпа, тональности и других характеристик трека.
+- **Анализ аудио**: Определение темпа, тональности и других характеристик трека. -- в разработке
 - **Поддержка различных форматов**: Работа с MP3, WAV, FLAC и другими популярными форматами.
 - **Интеграция с API**: Возможность подключения сторонних сервисов для улучшения точности распознавания.
 
@@ -40,11 +40,8 @@ Music Recognition — это программное обеспечение, ко
 Проект использует следующие технологии и библиотеки:
 
 - **Python**: Основной язык программирования.
-- **Librosa**: Библиотека для анализа аудио.
-- **TensorFlow / PyTorch**: Для машинного обучения и нейронных сетей.
+- **Librosa**: Библиотека для анализа аудио. -- в разработке
 - **ShazamAPI**: Интеграция с Shazam для распознавания музыки.
-- **Flask / FastAPI**: Для создания REST API (опционально).
-- **Docker**: Для контейнеризации приложения.
 
 ---
 
@@ -77,7 +74,7 @@ pip install -r requirements.txt
 Запустите приложение локально:
 
 ```bash
-python app.py
+python recognize.py /path/to/audio
 ```
 
 Если используется Docker:
@@ -95,19 +92,8 @@ docker-compose up --build
 Для распознавания музыки используйте следующую команду:
 
 ```bash
-python recognize.py --file path/to/audio/file.mp3
+python recognize.py /path/to/audio
 ```
-
-### Использование API
-
-Если запущен сервер API, отправьте POST-запрос с аудиофайлом:
-
-```bash
-curl -X POST http://localhost:5000/recognize \
-     -F "file=@path/to/audio/file.mp3"
-```
-
----
 
 ## Примеры
 
@@ -126,10 +112,11 @@ curl -X POST http://localhost:5000/recognize \
 ### Пример скрипта для распознавания
 
 ```python
-from music_recognition import recognize
 
-result = recognize("path/to/audio/file.mp3")
-print(result)
+from music import MusicService
+
+music_service = MusicService()
+music_service.convert_files_to_mp3(directory)
 ```
 
 ---
