@@ -1,138 +1,167 @@
+# 🎵 Music Recognition
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![GitHub Actions](https://github.com/formeo/music_recognition/actions/workflows/python-package.yml/badge.svg)](https://github.com/formeo/music_recognition/actions)
 
-# Music Recognition
+**Bulk music identification and tagging tool** — bring order to your chaotic music collection.
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+## The Problem
 
-[![Python package](https://github.com/formeo/music_recognition/actions/workflows/python-package.yml/badge.svg)](https://github.com/formeo/music_recognition/actions/workflows/python-package.yml)
+We all have them: old MP3 collections full of `Track01.mp3`, `Unknown - Unknown.mp3`, or just random numbers. Manually identifying each track is tedious and time-consuming.
 
-Music Recognition — это инструмент для распознавания музыки на основе аудиофайлов или потокового аудио. Проект позволяет идентифицировать композиции, извлекать метаданные и анализировать аудио с использованием современных технологий.
+## The Solution
 
-## Оглавление
+Music Recognition automatically:
+- 🔍 Identifies tracks via Shazam API
+- 📝 Extracts metadata: artist, title, album, year
+- 🔄 Converts audio formats when needed
+- ⚡ Processes files asynchronously for maximum speed
 
-- [Описание проекта](#описание-проекта)
-- [Основные возможности](#основные-возможности)
-- [Технологии](#технологии)
-- [Установка](#установка)
-- [Использование](#использование)
-- [Примеры](#примеры)
-- [Лицензия](#лицензия)
-- [Контакты](#контакты)
-
----
-
-## Описание проекта
-
-Music Recognition — это программное обеспечение, которое использует методы обработки сигналов и машинного обучения для анализа аудиоданных. Проект может быть полезен как для личного использования (например, для распознавания песен), так и для коммерческих целей (например, для создания музыкальных сервисов).
-
----
-
-## Основные возможности
-
-- **Распознавание музыки**: Идентификация треков по фрагментам аудио.
-- **Извлечение метаданных**: Получение информации о композиции (название, исполнитель, альбом).
-- **Анализ аудио**: Определение темпа, тональности и других характеристик трека. -- в разработке
-- **Поддержка различных форматов**: Работа с MP3, WAV, FLAC и другими популярными форматами.
-- **Интеграция с API**: Возможность подключения сторонних сервисов для улучшения точности распознавания.
-
----
-
-## Технологии
-
-Проект использует следующие технологии и библиотеки:
-
-- **Python**: Основной язык программирования.
-- **Librosa**: Библиотека для анализа аудио. -- в разработке
-- **ShazamAPI**: Интеграция с Shazam для распознавания музыки.
-
----
-
-## Установка
-
-### Предварительные требования
-
-- Python 3.8+
-- Docker (опционально)
-
-### Клонирование репозитория
+## Quick Start
 
 ```bash
+# Clone the repo
 git clone https://github.com/formeo/music_recognition.git
 cd music_recognition
-```
 
-### Установка зависимостей
-
-Создайте виртуальное окружение и установите зависимости:
-
-```bash
+# Set up environment
 python -m venv venv
-source venv/bin/activate  # Для Windows: venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
+
+# Run
+python recognize.py /path/to/music/folder
 ```
 
-### Запуск приложения
+## Usage
 
-Запустите приложение локально:
+### CLI — Recognize a folder
 
 ```bash
-python recognize.py /path/to/audio
+python recognize.py /path/to/audio/files
 ```
 
-Если используется Docker:
+### Programmatic API
 
-```bash
-docker-compose up --build
+```python
+from music import MusicService
+
+service = MusicService()
+
+# Convert files to mp3 if needed
+service.convert_files_to_mp3("/path/to/music")
+
+# Recognize a single file
+result = service.recognize_file("track.mp3")
+print(f"{result['artist']} - {result['track']}")
 ```
 
----
+### Async Processing (for large collections)
 
-## Использование
+```python
+from async_music import AsyncMusicService
+import asyncio
 
-### Распознавание музыки
+async def main():
+    service = AsyncMusicService()
+    results = await service.process_directory("/path/to/music")
+    for file, info in results.items():
+        print(f"{file}: {info['artist']} - {info['track']}")
 
-Для распознавания музыки используйте следующую команду:
-
-```bash
-python recognize.py /path/to/audio
+asyncio.run(main())
 ```
 
-## Примеры
+## Supported Formats
 
-### Пример вывода
+| Format | Read | Convert |
+|--------|------|---------|
+| MP3    | ✅    | —       |
+| WAV    | ✅    | ✅ → MP3 |
+| FLAC   | ✅    | ✅ → MP3 |
+| OGG    | ✅    | ✅ → MP3 |
+| M4A    | ✅    | ✅ → MP3 |
+
+## Example Output
 
 ```json
 {
   "track": "Bohemian Rhapsody",
   "artist": "Queen",
   "album": "A Night at the Opera",
-  "tempo": 120,
-  "key": "A major"
+  "year": "1975",
+  "genre": "Rock",
+  "cover_url": "https://..."
 }
 ```
 
-### Пример скрипта для распознавания
+## Requirements
 
-```python
+- Python 3.8+
+- FFmpeg (for format conversion)
 
-from music import MusicService
+```bash
+# Ubuntu/Debian
+sudo apt install ffmpeg
 
-music_service = MusicService()
-music_service.convert_files_to_mp3(directory)
+# macOS
+brew install ffmpeg
+
+# Windows
+# Download from https://ffmpeg.org/download.html
 ```
 
+## Project Structure
+
+```
+music_recognition/
+├── recognize.py      # CLI entry point
+├── music.py          # Synchronous service
+├── async_music.py    # Asynchronous service
+├── test_music.py     # Tests
+└── requirements.txt  # Dependencies
+```
+
+## Limitations
+
+- Shazam API has rate limits
+- Very rare or live recordings may not be recognized
+- Requires internet connection
+
+## Roadmap
+
+- [ ] Auto-write ID3 tags to files
+- [ ] Rename files using templates (`{artist} - {track}.mp3`)
+- [ ] MusicBrainz integration for extended metadata
+- [ ] Local fingerprinting via Chromaprint/AcoustID
+- [ ] GUI interface
+- [ ] Docker image
+- [ ] Watch mode for new files
+
+## Use Cases
+
+- **Digital hoarders**: Finally organize that 50GB music folder from 2005
+- **DJs**: Identify tracks from old mixtapes and recordings
+- **Media server admins**: Prepare libraries for Plex, Jellyfin, Navidrome
+- **Music collectors**: Tag and catalog vinyl rips and rare recordings
+
+## Contributing
+
+Contributions are welcome! Feel free to:
+- Report bugs
+- Suggest features
+- Submit pull requests
+
+## License
+
+MIT License — use freely.
+
+## Author
+
+[@formeo](https://github.com/formeo) • Senior Python Developer
+
 ---
 
-## Лицензия
+**Found a bug or have an idea?** [Open an issue](https://github.com/formeo/music_recognition/issues)
 
-Этот проект распространяется под лицензией [MIT](LICENSE). Подробности см. в файле `LICENSE`.
-
----
-
-## Контакты
-
-Если у вас есть вопросы или предложения, свяжитесь со мной:
-
-- Автор: [@formeo](https://github.com/formeo)
-- Email: formeo@example.com
-- GitHub: [https://github.com/formeo/music_recognition](https://github.com/formeo/music_recognition)
+**Like this project?** Give it a ⭐ on GitHub!
