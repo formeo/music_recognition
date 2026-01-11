@@ -1,106 +1,45 @@
 # 🎵 Music Recognition
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![GitHub Actions](https://github.com/formeo/music_recognition/actions/workflows/python-package.yml/badge.svg)](https://github.com/formeo/music_recognition/actions)
+[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![PyPI](https://img.shields.io/pypi/v/music-recognition.svg)](https://pypi.org/project/music-recognition/)
+[![Tests](https://github.com/formeo/music_recognition/actions/workflows/python-package.yml/badge.svg)](https://github.com/formeo/music_recognition/actions)
 ![Downloads](https://img.shields.io/github/downloads/formeo/music_recognition/total)
 ![Stars](https://img.shields.io/github/stars/formeo/music_recognition)
 
 **Bulk music identification and tagging tool** — bring order to your chaotic music collection.
 
-## The Problem
+Automatically identify unknown music files using Shazam, write ID3 tags, rename files, and organize into Artist/Album folders.
 
-We all have them: old MP3 collections full of `Track01.mp3`, `Unknown - Unknown.mp3`, or just random numbers. Manually identifying each track is tedious and time-consuming.
+## ✨ Features
 
-## The Solution
+- 🔍 **Identify tracks** via Shazam API
+- 📝 **Write ID3 tags** — title, artist, album, year, genre
+- 📁 **Rename files** — customizable templates like `{artist} - {title}.mp3`
+- 🗂️ **Organize** — automatic Artist/Album folder structure
+- ⚡ **Async processing** — concurrent requests with rate limiting
+- 🔄 **Format conversion** — WAV, FLAC, M4A, OGG → MP3
+- 📊 **Export reports** — JSON/CSV for processed files
+- 🛡️ **Safe** — dry-run mode to preview changes
 
-Music Recognition automatically:
-- 🔍 Identifies tracks via Shazam API
-- 📝 Extracts metadata: artist, title, album, year
-- 🔄 Converts audio formats when needed
-- ⚡ Processes files asynchronously for maximum speed
+## 🚀 Quick Start
 
-## Quick Start
+### Installation
 
 ```bash
-# Clone the repo
+# From source
 git clone https://github.com/formeo/music_recognition.git
 cd music_recognition
+pip install -e .
 
-# Set up environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+# Or install dependencies only
 pip install -r requirements.txt
-
-# Run
-python recognize.py /path/to/music/folder
 ```
 
-## Usage
+### Requirements
 
-### CLI — Recognize a folder
-
-```bash
-python recognize.py /path/to/audio/files
-```
-
-### Programmatic API
-
-```python
-from music import MusicService
-
-service = MusicService()
-
-# Convert files to mp3 if needed
-service.convert_files_to_mp3("/path/to/music")
-
-# Recognize a single file
-result = service.recognize_file("track.mp3")
-print(f"{result['artist']} - {result['track']}")
-```
-
-### Async Processing (for large collections)
-
-```python
-from async_music import AsyncMusicService
-import asyncio
-
-async def main():
-    service = AsyncMusicService()
-    results = await service.process_directory("/path/to/music")
-    for file, info in results.items():
-        print(f"{file}: {info['artist']} - {info['track']}")
-
-asyncio.run(main())
-```
-
-## Supported Formats
-
-| Format | Read | Convert |
-|--------|------|---------|
-| MP3    | ✅    | —       |
-| WAV    | ✅    | ✅ → MP3 |
-| FLAC   | ✅    | ✅ → MP3 |
-| OGG    | ✅    | ✅ → MP3 |
-| M4A    | ✅    | ✅ → MP3 |
-
-## Example Output
-
-```json
-{
-  "track": "Bohemian Rhapsody",
-  "artist": "Queen",
-  "album": "A Night at the Opera",
-  "year": "1975",
-  "genre": "Rock",
-  "cover_url": "https://..."
-}
-```
-
-## Requirements
-
-- Python 3.8+
-- FFmpeg (for format conversion)
+- Python 3.9+
+- FFmpeg (for audio conversion)
 
 ```bash
 # Ubuntu/Debian
@@ -110,60 +49,188 @@ sudo apt install ffmpeg
 brew install ffmpeg
 
 # Windows
-# Download from https://ffmpeg.org/download.html
+winget install ffmpeg
 ```
 
-## Project Structure
+### Basic Usage
+
+```bash
+# Recognize and tag all files in a directory
+music-recognize /path/to/music
+
+# Also rename files to "Artist - Title.mp3"
+music-recognize /path/to/music --rename
+
+# Organize into Artist/Album folders
+music-recognize /path/to/music --organize --output /sorted
+
+# Preview changes without modifying files
+music-recognize /path/to/music --rename --dry-run
+```
+
+## 📖 Usage Examples
+
+### Command Line
+
+```bash
+# Process single file
+music-recognize song.mp3
+
+# Process directory with custom template
+music-recognize /music --rename --template "{artist}/{album}/{title}.mp3"
+
+# Export results to JSON
+music-recognize /music --output report.json
+
+# Force re-recognition of already tagged files
+music-recognize /music --force --overwrite
+
+# Quiet mode (minimal output)
+music-recognize /music -q
+
+# Verbose mode (detailed logging)
+music-recognize /music -v
+```
+
+### Python API
+
+```python
+import asyncio
+from music_recognition import MusicRecognizer, recognize_and_tag
+
+# Simple one-liner
+asyncio.run(recognize_and_tag("/music", rename=True))
+
+# Full control
+async def process_collection():
+    recognizer = MusicRecognizer(
+        max_concurrent=5,
+        delay_between_requests=0.5,
+    )
+    
+    stats = await recognizer.process_directory(
+        source_dir="/music",
+        output_dir="/sorted",
+        write_tags=True,
+        rename=True,
+        rename_template="{artist} - {title}.mp3",
+        organize=True,
+        skip_recognized=True,
+        dry_run=False,
+    )
+    
+    print(f"Recognized: {stats.recognized}/{stats.processed}")
+    print(f"Success rate: {stats.success_rate:.1f}%")
+
+asyncio.run(process_collection())
+```
+
+## ⚙️ CLI Options
 
 ```
-music_recognition/
-├── recognize.py      # CLI entry point
-├── music.py          # Synchronous service
-├── async_music.py    # Asynchronous service
-├── test_music.py     # Tests
-└── requirements.txt  # Dependencies
+usage: music-recognize [-h] [-o PATH] [--rename] [--template TPL] [--organize]
+                       [--overwrite] [-f] [-c N] [--delay SEC] [-n] [-v] [-q]
+                       path
+
+Arguments:
+  path                    File or directory to process
+
+Options:
+  -o, --output PATH       Output directory or report file (.json/.csv)
+  --rename                Rename files based on metadata
+  --template TPL          Filename template (default: "{artist} - {title}.mp3")
+  --organize              Organize files into Artist/Album folders
+  --overwrite             Overwrite existing ID3 tags
+  -f, --force             Process files even if they have valid tags
+  -c, --concurrent N      Max concurrent requests (default: 5)
+  --delay SEC             Delay between requests (default: 0.5)
+  -n, --dry-run           Preview changes without modifying files
+  -v, --verbose           Verbose output
+  -q, --quiet             Minimal output
 ```
 
-## Limitations
+### Template Placeholders
 
-- Shazam API has rate limits
-- Very rare or live recordings may not be recognized
-- Requires internet connection
+| Placeholder | Description | Example |
+|-------------|-------------|---------|
+| `{artist}` | Artist name | Queen |
+| `{title}` | Track title | Bohemian Rhapsody |
+| `{album}` | Album name | A Night at the Opera |
+| `{year}` | Release year | 1975 |
+| `{genre}` | Genre | Rock |
+| `{track}` | Track number | 01 |
 
-## Roadmap
+## 📊 Output Example
 
-- [ ] Auto-write ID3 tags to files
-- [ ] Rename files using templates (`{artist} - {track}.mp3`)
-- [ ] MusicBrainz integration for extended metadata
-- [ ] Local fingerprinting via Chromaprint/AcoustID
-- [ ] GUI interface
-- [ ] Docker image
-- [ ] Watch mode for new files
+```
+╔══════════════════════════════════════════════════════════════╗
+║  🎵 Music Recognition v1.0.0                                 ║
+║  Identify • Tag • Rename • Organize                          ║
+╚══════════════════════════════════════════════════════════════╝
 
-## Use Cases
+Processing: /music/old_collection
+Actions: tag, rename
 
-- **Digital hoarders**: Finally organize that 50GB music folder from 2005
-- **DJs**: Identify tracks from old mixtapes and recordings
-- **Media server admins**: Prepare libraries for Plex, Jellyfin, Navidrome
-- **Music collectors**: Tag and catalog vinyl rips and rare recordings
+[150/150] 100.0% ✓ Unknown Track.mp3
 
-## Contributing
+══════════════════════════════════════════════════
+  SUMMARY
+══════════════════════════════════════════════════
+  Total files:    150
+  Processed:      150
+  Recognized:     142
+  Failed:         5
+  Skipped:        3
+  Success rate:   94.7%
+  Duration:       125.3s
+══════════════════════════════════════════════════
+```
 
-Contributions are welcome! Feel free to:
-- Report bugs
-- Suggest features
-- Submit pull requests
+## 🎯 Use Cases
 
-## License
+- **Digital hoarders**: 50GB folder of `Track01.mp3` from 2005
+- **DJs**: Tracks from old mixtapes without metadata
+- **Media server admins**: Plex/Jellyfin shows "Unknown Artist"
+- **Music collectors**: Vinyl rips without proper tags
+
+## 🔧 Supported Formats
+
+| Format | Read | Convert to MP3 |
+|--------|------|----------------|
+| MP3 | ✅ | — |
+| WAV | ✅ | ✅ |
+| FLAC | ✅ | ✅ |
+| M4A | ✅ | ✅ |
+| OGG | ✅ | ✅ |
+| OPUS | ✅ | ✅ |
+
+## 🧪 Development
+
+```bash
+# Install with dev dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest -v
+
+# Run tests with coverage
+pytest --cov=music_recognition --cov-report=html
+
+# Format code
+black src/
+isort src/
+```
+
+## 📄 License
 
 MIT License — use freely.
 
-## Author
+## 🙏 Credits
 
-[@formeo](https://github.com/formeo) • Senior Python Developer
+- [ShazamIO](https://github.com/dotX12/ShazamIO) — Python Shazam API wrapper
+- [Mutagen](https://github.com/quodlibet/mutagen) — Audio metadata library
+- [PyDub](https://github.com/jiaaro/pydub) — Audio format conversion
 
 ---
 
-**Found a bug or have an idea?** [Open an issue](https://github.com/formeo/music_recognition/issues)
-
-**Like this project?** Give it a ⭐ on GitHub!
+**Like this project?** Give it a ⭐ on [GitHub](https://github.com/formeo/music_recognition)!
