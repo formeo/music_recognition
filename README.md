@@ -3,6 +3,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![GitHub Actions](https://github.com/formeo/music_recognition/actions/workflows/python-package.yml/badge.svg)](https://github.com/formeo/music_recognition/actions)
+![Downloads](https://img.shields.io/github/downloads/formeo/music_recognition/total)
+![Stars](https://img.shields.io/github/stars/formeo/music_recognition)
 
 **Bulk music identification and tagging tool** — bring order to your chaotic music collection.
 
