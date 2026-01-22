@@ -25,15 +25,12 @@ from mutagen.id3 import ID3, ID3NoHeaderError
 from pydub import AudioSegment
 from shazamio import Shazam
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "formeo"
 
+from music_recognition.cache import RecognitionCache
+
 logger = logging.getLogger(__name__)
-
-
-# ============================================================
-# Data Classes
-# ============================================================
 
 @dataclass
 class TrackInfo:
@@ -149,6 +146,8 @@ class MusicRecognizer:
         max_concurrent: int = 5,
         delay_between_requests: float = 0.5,
         retry_attempts: int = 2,
+        use_cache: bool = True,
+        cache_path: Optional[str] = None,
     ):
         """
         Initialize the recognizer.
@@ -162,10 +161,26 @@ class MusicRecognizer:
         self.semaphore = asyncio.Semaphore(max_concurrent)
         self.delay = delay_between_requests
         self.retry_attempts = retry_attempts
+        self.cache = RecognitionCache(cache_path) if use_cache else None
     
     # ==================== Recognition ====================
-    
-    async def recognize_file(self, file_path: str) -> TrackInfo:
+
+    async def recognize_file(self, file_path: str, skip_cache: bool = False) -> TrackInfo:
+        """Recognize with cache support."""
+        if self.cache and not skip_cache:
+            cached = self.cache.get(file_path)
+            if cached:
+                logger.debug(f"Cache hit: {file_path}")
+                return cached
+
+        info = await self._recognize_shazam(file_path)
+
+        if self.cache and info.is_recognized:
+            self.cache.set(file_path, info)
+
+        return info
+
+    async def _recognize_shazam(self, file_path: str) -> TrackInfo:
         """
         Recognize a single audio file using Shazam.
         
