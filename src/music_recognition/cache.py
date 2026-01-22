@@ -1,11 +1,10 @@
-# В начало файла
 import hashlib
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Optional
 
-from music_recognition import TrackInfo
+from models.models import TrackInfo
 
 
 class RecognitionCache:

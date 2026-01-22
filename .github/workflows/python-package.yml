@@ -30,7 +30,7 @@ jobs:
         pip install -e ".[dev]"
     
     - name: Run tests
-      run: pytest -v --cov=music_recognition
+      run: pytest -v
 
     - name: Check formatting
       run: black --check src/
