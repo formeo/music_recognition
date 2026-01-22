@@ -28,7 +28,7 @@ from music_recognition import (
 @pytest.fixture
 def recognizer():
     """Create a MusicRecognizer instance."""
-    return MusicRecognizer(max_concurrent=2, delay_between_requests=0)
+    return MusicRecognizer(max_concurrent=2, delay_between_requests=0,use_cache=False,cache_path=None)
 
 
 @pytest.fixture
