@@ -10,8 +10,9 @@ from models.models import TrackInfo
 class RecognitionCache:
     """Cache for recognition results to avoid duplicate API calls."""
 
-    def __init__(self, db_path: str = "~/.music_recognition/cache.db"):
-        self.db_path = Path(db_path).expanduser()
+    def __init__(self, cache_path: Optional[str] = None):
+        self.db_path = cache_path or "~/.music_recognition/cache.db"
+        self.db_path = Path(self.db_path).expanduser()
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._init_db()
 
