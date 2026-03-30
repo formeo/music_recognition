@@ -398,9 +398,10 @@ Templates:
     # Print header
     if not args.quiet:
         print_header()
-    
-    # Run
+
     try:
+        if sys.platform == 'win32':
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
         return asyncio.run(main_async(args))
     except KeyboardInterrupt:
         print("\nInterrupted by user")

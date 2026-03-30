@@ -13,12 +13,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from music_recognition import (
-    MusicRecognizer,
-    TrackInfo,
-    ProcessingResult,
-    ProcessingStats,
-)
+from src.music_recognition import MusicRecognizer, TrackInfo, ProcessingStats
 
 
 # ============================================================
@@ -341,12 +336,12 @@ class TestCLI:
     
     def test_import_cli(self):
         """Test CLI module can be imported."""
-        from music_recognition.cli import main, Colors
+        from src.music_recognition.cli import main, Colors
         assert callable(main)
     
     def test_colors_defined(self):
         """Test color codes are defined."""
-        from music_recognition.cli import Colors
+        from src.music_recognition.cli import Colors
         assert hasattr(Colors, 'GREEN')
         assert hasattr(Colors, 'RED')
         assert hasattr(Colors, 'END')

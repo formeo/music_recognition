@@ -1,8 +1,11 @@
 # Music Recognition dependencies
-shazamio>=0.6.0
+# Core
+shazamio>=0.7.0
 mutagen>=1.47.0
 pydub>=0.25.1
-aiohttp>=3.9.0
-aiofiles>=23.0.0
-librosa==0.11.0
-watchdog==6.0.0
+
+# Optional: watch mode
+watchdog>=4.0.0
+
+# Optional: audio analysis
+librosa>=0.10.0
