@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Optional
 
-from models.models import TrackInfo
+from .models import TrackInfo
 
 
 class RecognitionCache:

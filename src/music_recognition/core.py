@@ -28,8 +28,8 @@ from shazamio import Shazam
 __version__ = "1.1.0"
 __author__ = "formeo"
 
-from music_recognition.cache import RecognitionCache
-from models.models import TrackInfo
+from .cache import RecognitionCache
+from .models import TrackInfo
 
 logger = logging.getLogger(__name__)
 

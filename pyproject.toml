@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "music-recognition-tool"
-version = "1.0.0"
+version = "1.2.1"
 description = "Identify music files using Shazam, write ID3 tags, rename and organize"
 readme = "README.md"
 license = "MIT"
@@ -27,12 +27,13 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "shazamio>=0.6.0",
+    "shazamio>=0.7.0",
     "mutagen>=1.47.0",
     "pydub>=0.25.1",
 ]
 
 [project.optional-dependencies]
+watch = ["watchdog>=4.0.0"]
 analyze = ["librosa>=0.10.0", "numpy>=1.24.0"]
 dev = [
     "pytest>=7.0.0",
