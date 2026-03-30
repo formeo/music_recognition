@@ -4,7 +4,6 @@
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![PyPI](https://img.shields.io/pypi/v/music-recognition-tool.svg)](https://pypi.org/project/music-recognition-tool/)
 [![Tests](https://github.com/formeo/music_recognition/actions/workflows/python-package.yml/badge.svg)](https://github.com/formeo/music_recognition/actions)
-[![PyPI Downloads](https://static.pepy.tech/badge/music-recognition-tool/month)](https://pepy.tech/projects/music-recognition-tool)
 ![Stars](https://img.shields.io/github/stars/formeo/music_recognition)
 
 **Bulk music identification and tagging tool** — bring order to your chaotic music collection.
