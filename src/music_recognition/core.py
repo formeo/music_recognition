@@ -153,35 +153,38 @@ class MusicRecognizer:
         return info
 
     async def _recognize_shazam(self, file_path: str) -> TrackInfo:
-        """
-        Recognize a single audio file using Shazam.
-        
-        Args:
-            file_path: Path to the audio file
-            
-        Returns:
-            TrackInfo with recognized metadata
-        """
+        """Recognize a 15s slice from the middle of the track."""
         async with self.semaphore:
             for attempt in range(self.retry_attempts + 1):
                 try:
                     logger.debug(f"Recognizing (attempt {attempt + 1}): {file_path}")
+                    
+                    # Load audio and calculate offset (33% into the song)
+                    full_audio = AudioSegment.from_file(file_path)
+                    start_ms = len(full_audio) // 3
+                    
+                    # Take 15 seconds. If song is too short, take what's available.
+                    sample = full_audio[start_ms : start_ms + 15000]
+                    
+                    # Convert slice to bytes for the API
+                    import io
+                    buffer = io.BytesIO()
+                    sample.export(buffer, format="mp3")
+                    audio_bytes = buffer.getvalue()
 
-                    result = await self.shazam.recognize(file_path)
-
+                    # Use recognize_song (for bytes) instead of recognize (for paths)
+                    result = await self.shazam.recognize_song(audio_bytes)
+                    
                     if self.delay > 0:
                         await asyncio.sleep(self.delay)
-
                     return self._parse_shazam_response(result)
-
                 except Exception as e:
                     logger.warning(f"Recognition attempt {attempt + 1} failed for {file_path}: {e}")
                     if attempt < self.retry_attempts:
-                        await asyncio.sleep(1.0 * (attempt + 1))  # Exponential backoff
+                        await asyncio.sleep(1.0 * (attempt + 1))
                     else:
                         logger.error(f"All recognition attempts failed for {file_path}")
                         return TrackInfo()
-
         return TrackInfo()
 
     def _parse_shazam_response(self, response: Dict[str, Any]) -> TrackInfo:
