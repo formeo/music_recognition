@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- `--concurrent` / `max_concurrent` had no effect: files were processed one by one. Files now run concurrently,
+  with at most `--concurrent` Shazam requests in flight (default 5). Lower it if Shazam starts rejecting requests.
+
 ## 1.2.2
 
 ### Changed (behavior)
