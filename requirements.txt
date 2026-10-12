@@ -3,6 +3,7 @@
 shazamio>=0.7.0
 mutagen>=1.47.0
 pydub>=0.25.1
+audioop-lts>=0.2.1; python_version >= "3.13"
 
 # Optional: watch mode
 watchdog>=4.0.0

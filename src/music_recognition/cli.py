@@ -78,7 +78,7 @@ def print_result(result: ProcessingResult, verbose: bool = False):
     if result.status == "success":
         info = result.track_info
         print(f"  {colored('✓', Colors.GREEN)} {colored(info.artist, Colors.BOLD)} - {info.title}")
-        if verbose and info.album != "Unknown Album":
+        if verbose and info.album:
             print(f"    Album: {info.album}")
     elif result.status == "skipped":
         info = result.track_info
@@ -235,6 +235,7 @@ async def main_async(args: argparse.Namespace) -> int:
             overwrite_tags=args.overwrite,
             skip_recognized=not args.force,
             convert_formats=args.convert,
+            delete_source=args.delete_source,
             dry_run=args.dry_run,
             progress_callback=callback,
         )
@@ -335,14 +336,19 @@ Templates:
     parser.add_argument(
         '--convert',
         action='store_true',
-        default=True,
-        help='Convert non-MP3 files to MP3 (default: enabled)'
+        default=False,
+        help='Convert non-MP3 files to MP3, keeping the source (default: disabled)'
     )
     parser.add_argument(
         '--no-convert',
         action='store_false',
         dest='convert',
-        help='Do not convert non-MP3 files'
+        help='Do not convert non-MP3 files (default)'
+    )
+    parser.add_argument(
+        '--delete-source',
+        action='store_true',
+        help='With --convert: delete the source file after successful conversion'
     )
     
     # Performance options

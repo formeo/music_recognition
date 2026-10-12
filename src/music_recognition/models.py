@@ -7,7 +7,7 @@ class TrackInfo:
     """Recognized track metadata."""
     title: str = "Unknown"
     artist: str = "Unknown"
-    album: str = "Unknown Album"
+    album: str = ""
     year: str = ""
     genre: str = ""
     track_number: str = ""

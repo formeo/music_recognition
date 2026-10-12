@@ -16,6 +16,7 @@ import re
 import shutil
 from dataclasses import dataclass, field
 from datetime import datetime
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
@@ -25,7 +26,10 @@ from mutagen.id3 import ID3NoHeaderError
 from pydub import AudioSegment
 from shazamio import Shazam
 
-__version__ = "1.1.0"
+try:
+    __version__ = version("music-recognition-tool")
+except PackageNotFoundError:  # running from a source tree without installation
+    __version__ = "0.0.0+unknown"
 __author__ = "formeo"
 
 from .cache import RecognitionCache
@@ -209,12 +213,7 @@ class MusicRecognizer:
                         # Extract year from date string
                         info.year = meta_text[:4] if meta_text else ''
 
-        # Get genre from hub actions
-        if 'hub' in track:
-            for action in track['hub'].get('options', []):
-                if 'listcaption' in action:
-                    info.genre = action.get('listcaption', '')
-                    break
+        info.genre = track.get('genres', {}).get('primary', '')
 
         # Get cover art URL
         if 'images' in track:
@@ -232,7 +231,7 @@ class MusicRecognizer:
             return TrackInfo(
                 title=audio.get('title', ['Unknown'])[0],
                 artist=audio.get('artist', ['Unknown'])[0],
-                album=audio.get('album', ['Unknown Album'])[0],
+                album=audio.get('album', [''])[0],
                 year=audio.get('date', [''])[0][:4] if audio.get('date') else '',
                 genre=audio.get('genre', [''])[0] if audio.get('genre') else '',
                 track_number=audio.get('tracknumber', [''])[0] if audio.get('tracknumber') else '',
@@ -268,6 +267,10 @@ class MusicRecognizer:
             logger.warning(f"Skipping unrecognized track: {file_path}")
             return False
 
+        if Path(file_path).suffix.lower() != MusicRecognizer.MP3_EXTENSION:
+            logger.warning(f"Tag writing is not supported yet for {Path(file_path).suffix} files, skipping: {file_path}")
+            return False
+
         try:
             # Load or create tags
             try:
@@ -287,8 +290,9 @@ class MusicRecognizer:
             # Write tags
             audio['title'] = info.title
             audio['artist'] = info.artist
-            audio['album'] = info.album
 
+            if info.album:
+                audio['album'] = info.album
             if info.year:
                 audio['date'] = info.year
             if info.genre:
@@ -470,7 +474,9 @@ class MusicRecognizer:
 
             # Determine target directory
             if organize and output_dir:
-                target_dir = Path(output_dir) / self.sanitize_filename(info.artist) / self.sanitize_filename(info.album)
+                target_dir = Path(output_dir) / self.sanitize_filename(info.artist)
+                if info.album:
+                    target_dir = target_dir / self.sanitize_filename(info.album)
             elif output_dir:
                 target_dir = Path(output_dir)
             else:
@@ -479,14 +485,19 @@ class MusicRecognizer:
             # Determine final filename
             if rename:
                 new_filename = self.generate_filename(info, rename_template)
+                # Keep the real extension: legacy templates end with ".mp3" for every format
+                if Path(new_filename).suffix.lower() in self.SUPPORTED_EXTENSIONS:
+                    new_filename = new_filename[:-len(Path(new_filename).suffix)]
+                new_filename += Path(current_path).suffix
             else:
                 new_filename = Path(current_path).name
 
             final_path = target_dir / new_filename
-            final_path_str = self.uniquify(str(final_path))
 
-            # Move/rename if needed
-            if str(final_path_str) != current_path:
+            # Move/rename if needed (the file must not collide with itself)
+            already_in_place = final_path.exists() and os.path.samefile(final_path, current_path)
+            if not already_in_place:
+                final_path_str = self.uniquify(str(final_path))
                 if dry_run:
                     logger.info(f"[DRY RUN] Would move: {current_path} -> {final_path_str}")
                 else:
@@ -517,7 +528,8 @@ class MusicRecognizer:
             organize: bool = False,
             overwrite_tags: bool = False,
             skip_recognized: bool = True,
-            convert_formats: bool = True,
+            convert_formats: bool = False,
+            delete_source: bool = False,
             dry_run: bool = False,
             progress_callback: Optional[callable] = None,
     ) -> ProcessingStats:
@@ -533,7 +545,8 @@ class MusicRecognizer:
             organize: Organize into Artist/Album folders
             overwrite_tags: Overwrite existing tags
             skip_recognized: Skip files that already have valid tags
-            convert_formats: Convert non-MP3 files to MP3
+            convert_formats: Convert non-MP3 files to MP3 (source is kept)
+            delete_source: Delete the source file after successful conversion
             dry_run: Preview without making changes
             progress_callback: Called with (current, total, result) for each file
             
@@ -558,7 +571,7 @@ class MusicRecognizer:
                 if dry_run:
                     logger.info(f"[DRY RUN] Would convert: {file_path}")
                 else:
-                    converted = self.convert_to_mp3(file_path, remove_source=True)
+                    converted = self.convert_to_mp3(file_path, remove_source=delete_source)
                     if converted:
                         file_path = converted
                     else:
