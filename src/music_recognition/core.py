@@ -563,7 +563,14 @@ class MusicRecognizer:
         stats.total = len(files_to_process)
         logger.info(f"Found {stats.total} files to process in {source_dir}")
 
-        for i, file_path in enumerate(files_to_process):
+        completed = 0
+
+        # Files run concurrently; self.semaphore bounds the Shazam requests.
+        # Everything after the recognition await in process_file (tags, uniquify, move)
+        # is synchronous, so two files can never claim the same target name.
+        async def handle(file_path: str) -> None:
+            nonlocal completed
+
             # Convert if needed
             if convert_formats and Path(file_path).suffix.lower() != self.MP3_EXTENSION:
                 if dry_run:
@@ -573,13 +580,17 @@ class MusicRecognizer:
                     if converted:
                         file_path = converted
                     else:
-                        stats.failed += 1
-                        stats.results.append(ProcessingResult(
+                        result = ProcessingResult(
                             original_path=file_path,
                             status="failed",
                             error="Conversion failed"
-                        ))
-                        continue
+                        )
+                        stats.failed += 1
+                        stats.results.append(result)
+                        completed += 1
+                        if progress_callback:
+                            progress_callback(completed, stats.total, result)
+                        return
 
             # Process file
             result = await self.process_file(
@@ -605,8 +616,11 @@ class MusicRecognizer:
                 stats.skipped += 1
 
             # Progress callback
+            completed += 1
             if progress_callback:
-                progress_callback(i + 1, stats.total, result)
+                progress_callback(completed, stats.total, result)
+
+        await asyncio.gather(*(handle(file_path) for file_path in files_to_process))
 
         logger.info(
             f"Processing complete: {stats.recognized}/{stats.processed} recognized "
