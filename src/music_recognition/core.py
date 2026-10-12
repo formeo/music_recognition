@@ -21,8 +21,6 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any
 
 import mutagen
-from mutagen.easyid3 import EasyID3
-from mutagen.id3 import ID3NoHeaderError
 from pydub import AudioSegment
 from shazamio import Shazam
 
@@ -113,6 +111,8 @@ class MusicRecognizer:
 
     SUPPORTED_EXTENSIONS = {'.mp3', '.wav', '.flac', '.m4a', '.ogg', '.opus', '.wma', '.aac'}
     MP3_EXTENSION = '.mp3'
+    # Formats whose tags mutagen's "easy" interface reads and writes as plain strings
+    TAGGABLE_EXTENSIONS = {'.mp3', '.flac', '.m4a', '.ogg', '.opus'}
 
     # Characters not allowed in filenames
     FORBIDDEN_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
@@ -225,9 +225,9 @@ class MusicRecognizer:
 
     @staticmethod
     def read_existing_tags(file_path: str) -> TrackInfo:
-        """Read existing ID3 tags from file."""
+        """Read existing tags from file."""
         try:
-            audio = EasyID3(file_path)
+            audio = mutagen.File(file_path, easy=True)
             return TrackInfo(
                 title=audio.get('title', ['Unknown'])[0],
                 artist=audio.get('artist', ['Unknown'])[0],
@@ -241,9 +241,9 @@ class MusicRecognizer:
 
     @staticmethod
     def has_valid_tags(file_path: str) -> bool:
-        """Check if file has valid (non-empty) ID3 tags."""
+        """Check if file has valid (non-empty) title and artist tags."""
         try:
-            audio = EasyID3(file_path)
+            audio = mutagen.File(file_path, easy=True)
             title = audio.get('title', [''])[0]
             artist = audio.get('artist', [''])[0]
             return bool(title and artist and title != 'Unknown' and artist != 'Unknown')
@@ -253,10 +253,10 @@ class MusicRecognizer:
     @staticmethod
     def write_tags(file_path: str, info: TrackInfo, overwrite: bool = False) -> bool:
         """
-        Write ID3 tags to an MP3 file.
+        Write tags to an MP3, FLAC, M4A, OGG or Opus file.
         
         Args:
-            file_path: Path to the MP3 file
+            file_path: Path to the audio file
             info: TrackInfo with metadata
             overwrite: If True, overwrite existing tags
             
@@ -267,16 +267,14 @@ class MusicRecognizer:
             logger.warning(f"Skipping unrecognized track: {file_path}")
             return False
 
-        if Path(file_path).suffix.lower() != MusicRecognizer.MP3_EXTENSION:
+        if Path(file_path).suffix.lower() not in MusicRecognizer.TAGGABLE_EXTENSIONS:
             logger.warning(f"Tag writing is not supported yet for {Path(file_path).suffix} files, skipping: {file_path}")
             return False
 
         try:
             # Load or create tags
-            try:
-                audio = EasyID3(file_path)
-            except ID3NoHeaderError:
-                audio = mutagen.File(file_path, easy=True)
+            audio = mutagen.File(file_path, easy=True)
+            if audio.tags is None:
                 audio.add_tags()
 
             # Check existing tags

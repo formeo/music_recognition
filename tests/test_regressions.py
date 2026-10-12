@@ -14,7 +14,6 @@ from mutagen.easyid3 import EasyID3
 
 from music_recognition import MusicRecognizer
 from music_recognition.cache import RecognitionCache
-from music_recognition.models import TrackInfo
 
 pytestmark = pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="ffmpeg is required")
 
@@ -122,13 +121,6 @@ async def test_rename_template_without_extension(recognizer, tmp_path):
     make_audio(tmp_path / "x.m4a")
     await recognizer.process_directory(str(tmp_path), rename=True, rename_template="{artist} - {title}")
     assert listing(tmp_path) == ["Artist - Song.m4a"]
-
-
-@pytest.mark.asyncio
-async def test_non_mp3_tags_skipped_with_warning(recognizer, tmp_path, caplog):
-    path = make_audio(tmp_path / "x.flac")
-    assert MusicRecognizer.write_tags(str(path), TrackInfo(title="Song", artist="Artist")) is False
-    assert "not supported" in caplog.text
 
 
 # ---------- metadata ----------

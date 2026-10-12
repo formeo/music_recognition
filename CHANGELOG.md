@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Tags are written and read for FLAC, M4A, OGG and Opus, not only MP3. Already tagged files in these formats
+  are skipped on the next run instead of being sent to Shazam again.
+
 ## 1.2.2
 
 ### Changed (behavior)
