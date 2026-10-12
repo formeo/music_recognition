@@ -13,7 +13,7 @@ Automatically identify unknown music files using Shazam, write ID3 tags, rename 
 ## ✨ Features
 
 - 🔍 **Identify tracks** via Shazam API
-- 📝 **Write ID3 tags** — title, artist, album, year, genre
+- 📝 **Write tags** — title, artist, album, year, genre (MP3, FLAC, M4A, OGG, Opus)
 - 📁 **Rename files** — customizable templates like `{artist} - {title}.mp3`
 - 🗂️ **Organize** — automatic Artist/Album folder structure
 - ⚡ **Async processing** — concurrent requests with rate limiting
@@ -208,7 +208,7 @@ Actions: tag, rename
 | OGG | ✅ | ✅ |
 | OPUS | ✅ | ✅ |
 
-Tags are currently written to MP3 files only; other formats are recognized, renamed and organized, but their tags are left untouched.
+Tags are written to MP3 (ID3), FLAC/OGG/Opus (Vorbis comments) and M4A (MP4 atoms). WAV, AAC and WMA files are recognized, renamed and organized, but their tags are left untouched.
 
 ## 🧪 Development
 

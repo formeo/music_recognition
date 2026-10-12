@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+- Tags are written and read for FLAC, M4A, OGG and Opus, not only MP3. Already tagged files in these formats
+  are skipped on the next run instead of being sent to Shazam again.
+
 ### Fixed
 - `--concurrent` / `max_concurrent` had no effect: files were processed one by one. Files now run concurrently,
   with at most `--concurrent` Shazam requests in flight (default 5). Lower it if Shazam starts rejecting requests.
