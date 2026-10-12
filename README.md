@@ -17,7 +17,7 @@ Automatically identify unknown music files using Shazam, write ID3 tags, rename 
 - 📁 **Rename files** — customizable templates like `{artist} - {title}.mp3`
 - 🗂️ **Organize** — automatic Artist/Album folder structure
 - ⚡ **Async processing** — concurrent requests with rate limiting
-- 🔄 **Format conversion** — WAV, FLAC, M4A, OGG → MP3
+- 🔄 **Format conversion** (opt-in, `--convert`) — WAV, FLAC, M4A, OGG → MP3; originals are kept unless `--delete-source`
 - 📊 **Export reports** — JSON/CSV for processed files
 - 🛡️ **Safe** — dry-run mode to preview changes
 
@@ -37,7 +37,7 @@ pip install -r requirements.txt
 
 ### Requirements
 
-- Python 3.9+
+- Python 3.10+
 - FFmpeg (for audio conversion)
 
 ```bash
@@ -128,7 +128,8 @@ asyncio.run(process_collection())
 
 ```
 usage: music-recognize [-h] [-o PATH] [--rename] [--template TPL] [--organize]
-                       [--overwrite] [-f] [-c N] [--delay SEC] [-n] [-v] [-q]
+                       [--overwrite] [-f] [--convert] [--delete-source]
+                       [-c N] [--delay SEC] [-n] [-v] [-q]
                        path
 
 Arguments:
@@ -141,6 +142,8 @@ Options:
   --organize              Organize files into Artist/Album folders
   --overwrite             Overwrite existing ID3 tags
   -f, --force             Process files even if they have valid tags
+  --convert               Convert non-MP3 files to MP3, keeping the source
+  --delete-source         With --convert: delete the source after conversion
   -c, --concurrent N      Max concurrent requests (default: 5)
   --delay SEC             Delay between requests (default: 0.5)
   -n, --dry-run           Preview changes without modifying files
@@ -159,11 +162,13 @@ Options:
 | `{genre}` | Genre | Rock |
 | `{track}` | Track number | 01 |
 
+The file keeps its real extension: `{artist} - {title}` and `{artist} - {title}.mp3` both rename `song.flac` to `Artist - Title.flac`.
+
 ## 📊 Output Example
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
-║  🎵 Music Recognition v1.0.0                                 ║
+║  🎵 Music Recognition v1.2.2                                 ║
 ║  Identify • Tag • Rename • Organize                          ║
 ╚══════════════════════════════════════════════════════════════╝
 
@@ -202,6 +207,8 @@ Actions: tag, rename
 | M4A | ✅ | ✅ |
 | OGG | ✅ | ✅ |
 | OPUS | ✅ | ✅ |
+
+Tags are currently written to MP3 files only; other formats are recognized, renamed and organized, but their tags are left untouched.
 
 ## 🧪 Development
 

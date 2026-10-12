@@ -1,6 +1,8 @@
 import hashlib
+import json
 import sqlite3
 from contextlib import contextmanager
+from dataclasses import asdict, fields
 from pathlib import Path
 from typing import Optional
 
@@ -48,19 +50,19 @@ class RecognitionCache:
             ).fetchone()
 
             if row:
-                import json
                 data = json.loads(row[0])
-                return TrackInfo(**data)
+                # Ignore unknown keys (entries written by older versions contain "recognized")
+                known = {f.name for f in fields(TrackInfo)}
+                return TrackInfo(**{k: v for k, v in data.items() if k in known})
         return None
 
     def set(self, file_path: str, info: TrackInfo):
         """Cache recognition result."""
-        import json
         audio_hash = self._hash_audio(file_path)
         with self._connect() as conn:
             conn.execute(
                 "INSERT OR REPLACE INTO cache (audio_hash, track_info) VALUES (?, ?)",
-                (audio_hash, json.dumps(info.to_dict()))
+                (audio_hash, json.dumps(asdict(info)))
             )
 
     def clear(self, older_than_days: int = 30):

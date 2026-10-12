@@ -13,7 +13,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from src.music_recognition import MusicRecognizer, TrackInfo, ProcessingStats
+from music_recognition import MusicRecognizer, TrackInfo, ProcessingStats
 
 
 # ============================================================
@@ -66,9 +66,12 @@ def sample_shazam_response():
             "images": {
                 "coverart": "https://example.com/cover.jpg"
             },
+            "genres": {
+                "primary": "Rock"
+            },
             "hub": {
                 "options": [
-                    {"listcaption": "Rock"}
+                    {"caption": "OPEN IN", "listcaption": "Open in Apple Music"}
                 ]
             }
         }
@@ -240,6 +243,7 @@ class TestMusicRecognizer:
         assert info.artist == "Queen"
         assert info.album == "A Night at the Opera"
         assert info.year == "1975"
+        assert info.genre == "Rock"
         assert info.cover_url == "https://example.com/cover.jpg"
         assert info.is_recognized is True
     
@@ -336,12 +340,12 @@ class TestCLI:
     
     def test_import_cli(self):
         """Test CLI module can be imported."""
-        from src.music_recognition.cli import main, Colors
+        from music_recognition.cli import main, Colors
         assert callable(main)
     
     def test_colors_defined(self):
         """Test color codes are defined."""
-        from src.music_recognition.cli import Colors
+        from music_recognition.cli import Colors
         assert hasattr(Colors, 'GREEN')
         assert hasattr(Colors, 'RED')
         assert hasattr(Colors, 'END')

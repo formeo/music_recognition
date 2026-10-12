@@ -1,10 +1,10 @@
 # src/music_recognition/__init__.py
 """Music Recognition - Identify, tag, rename and organize music files."""
 
-__version__ = "1.1.0"
 __author__ = "formeo"
 
 from .core import (
+    __version__,
     MusicRecognizer,
     TrackInfo,
     ProcessingResult,
