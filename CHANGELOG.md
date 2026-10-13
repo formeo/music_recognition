@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.3.0
 
 ### Added
 - Tags are written and read for FLAC, M4A, OGG and Opus, not only MP3. Already tagged files in these formats
@@ -9,6 +9,9 @@
 ### Fixed
 - `--concurrent` / `max_concurrent` had no effect: files were processed one by one. Files now run concurrently,
   with at most `--concurrent` Shazam requests in flight (default 5). Lower it if Shazam starts rejecting requests.
+
+### Documentation
+- README rewritten: processing pipeline, full CLI reference, format support matrix, safety notes and known limitations.
 
 ## 1.2.2
 
