@@ -1,242 +1,242 @@
-# 🎵 Music Recognition
+# music-recognition-tool
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![PyPI](https://img.shields.io/pypi/v/music-recognition-tool.svg)](https://pypi.org/project/music-recognition-tool/)
-[![Tests](https://github.com/formeo/music_recognition/actions/workflows/python-package.yml/badge.svg)](https://github.com/formeo/music_recognition/actions)
-![Stars](https://img.shields.io/github/stars/formeo/music_recognition)
+[![Python](https://img.shields.io/pypi/pyversions/music-recognition-tool.svg)](https://pypi.org/project/music-recognition-tool/)
+[![Tests](https://github.com/formeo/music_recognition/actions/workflows/python-package.yml/badge.svg)](https://github.com/formeo/music_recognition/actions/workflows/python-package.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-**Bulk music identification and tagging tool** — bring order to your chaotic music collection.
+A command-line tool and Python library for batch identification of audio files. It recognizes tracks with Shazam, writes the results to file tags, and optionally renames files and sorts them into an `Artist/Album` directory structure.
 
-Automatically identify unknown music files using Shazam, write ID3 tags, rename files, and organize into Artist/Album folders.
+Typical use: a large collection of files named `Track01.mp3`, vinyl rips, or anything a media server (Plex, Jellyfin) lists as "Unknown Artist".
 
-## ✨ Features
+## Contents
 
-- 🔍 **Identify tracks** via Shazam API
-- 📝 **Write tags** — title, artist, album, year, genre (MP3, FLAC, M4A, OGG, Opus)
-- 📁 **Rename files** — customizable templates like `{artist} - {title}.mp3`
-- 🗂️ **Organize** — automatic Artist/Album folder structure
-- ⚡ **Async processing** — concurrent requests with rate limiting
-- 🔄 **Format conversion** (opt-in, `--convert`) — WAV, FLAC, M4A, OGG → MP3; originals are kept unless `--delete-source`
-- 📊 **Export reports** — JSON/CSV for processed files
-- 🛡️ **Safe** — dry-run mode to preview changes
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [How processing works](#how-processing-works)
+- [Command-line reference](#command-line-reference)
+- [Filename templates](#filename-templates)
+- [Supported formats](#supported-formats)
+- [Reports](#reports)
+- [Python API](#python-api)
+- [Safety](#safety)
+- [Limitations](#limitations)
+- [Development](#development)
+- [License](#license)
 
-## 🚀 Quick Start
+## Features
 
-### Installation
+- Track recognition through Shazam, with retries and a configurable number of concurrent requests.
+- Tag writing for MP3 (ID3), FLAC, OGG and Opus (Vorbis comments), and M4A (MP4 atoms): title, artist, album, year, genre.
+- Renaming from a template such as `{artist} - {title}`; the original file extension is always preserved.
+- Moving files into `<output>/<Artist>/<Album>/`.
+- Files that already have title and artist tags are skipped, and a repeated run over the same directory changes nothing.
+- Dry-run mode that reports planned changes without touching any file.
+- JSON and CSV reports.
+- Optional conversion to MP3 that keeps the source file unless deletion is requested explicitly.
+
+## Requirements
+
+- Python 3.10 or later.
+- FFmpeg. Required to recognize M4A, Opus, AAC and WMA files and for `--convert`. MP3, FLAC, OGG and WAV are recognized without it, but installing FFmpeg is recommended.
 
 ```bash
-# From source
-git clone https://github.com/formeo/music_recognition.git
-cd music_recognition
-pip install -e .
-
-# Or install dependencies only
-pip install -r requirements.txt
-```
-
-### Requirements
-
-- Python 3.10+
-- FFmpeg (for audio conversion)
-
-```bash
-# Ubuntu/Debian
+# Debian / Ubuntu
 sudo apt install ffmpeg
-
 # macOS
 brew install ffmpeg
-
 # Windows
 winget install ffmpeg
 ```
 
-### Basic Usage
+## Installation
 
 ```bash
-# Recognize and tag all files in a directory
-music-recognize /path/to/music
-
-# Also rename files to "Artist - Title.mp3"
-music-recognize /path/to/music --rename
-
-# Organize into Artist/Album folders
-music-recognize /path/to/music --organize --output /sorted
-
-# Preview changes without modifying files
-music-recognize /path/to/music --rename --dry-run
+pip install music-recognition-tool
 ```
 
-## 📖 Usage Examples
-
-### Command Line
+This installs the `music-recognize` command. To install from source:
 
 ```bash
-# Process single file
-music-recognize song.mp3
-
-# Process directory with custom template
-music-recognize /music --rename --template "{artist}/{album}/{title}.mp3"
-
-# Export results to JSON
-music-recognize /music --output report.json
-
-# Force re-recognition of already tagged files
-music-recognize /music --force --overwrite
-
-# Quiet mode (minimal output)
-music-recognize /music -q
-
-# Verbose mode (detailed logging)
-music-recognize /music -v
+git clone https://github.com/formeo/music_recognition.git
+cd music_recognition
+pip install .
 ```
 
-### Python API
+## Quick start
+
+Preview the changes first, then apply them:
+
+```bash
+music-recognize ~/Music/unsorted --rename --dry-run
+music-recognize ~/Music/unsorted --rename
+```
+
+Recognize, tag and move files into an `Artist/Album` tree:
+
+```bash
+music-recognize ~/Music/unsorted --rename --organize -o ~/Music/sorted
+```
+
+Write a report without moving files:
+
+```bash
+music-recognize ~/Music/unsorted -o report.json
+```
+
+## How processing works
+
+For each supported file found recursively under the given path:
+
+1. **Skip check.** A file whose tags already contain a title and an artist is skipped. `--force` disables this check.
+2. **Conversion** (only with `--convert`). Non-MP3 files are converted to MP3 at 320 kbit/s next to the source. The source is kept unless `--delete-source` is given.
+3. **Recognition.** The file is sent to Shazam. Failed requests are retried twice with a growing delay.
+4. **Tagging.** Tags are written unless `--no-tag` is given. Existing tags are left unchanged unless `--overwrite` is given.
+5. **Renaming and moving.** With `--rename`, the file name is built from the template. With `-o DIR`, the file is moved to `DIR`, or with `--organize` to `DIR/<Artist>/<Album>/` (`DIR/<Artist>/` when the album is unknown). If the target name is taken by another file, a suffix ` (1)`, ` (2)`, … is added. A file that is already at its target path is not touched.
+
+Up to `--concurrent` files are recognized at the same time. Recognition results are cached in `~/.music_recognition/cache.db`.
+
+## Command-line reference
+
+```
+music-recognize PATH [options]
+```
+
+`PATH` is a file or a directory. Directories are scanned recursively.
+
+| Option | Default | Description |
+|---|---|---|
+| `-o`, `--output PATH` | — | Output directory for moved files. If `PATH` ends in `.json` or `.csv`, a report is written instead (directory mode only). |
+| `--rename` | off | Rename files using `--template`. |
+| `--template TPL` | `{artist} - {title}.mp3` | Filename template; see [Filename templates](#filename-templates). |
+| `--organize` | off | Move files into `<output>/<Artist>/<Album>/`. Requires `-o DIR`; has no effect without it. |
+| `--no-tag` | — | Do not write tags. Tags are written by default. |
+| `--overwrite` | off | Replace existing tags. Also processes files that would otherwise be skipped. |
+| `-f`, `--force` | off | Process files that already have title and artist tags. Their tags are kept unless `--overwrite` is also given. |
+| `--convert` | off | Convert non-MP3 files to MP3, keeping the source (directory mode only). |
+| `--delete-source` | off | With `--convert`: delete the source file after a successful conversion. |
+| `-c`, `--concurrent N` | `5` | Maximum number of simultaneous Shazam requests. |
+| `--delay SEC` | `0.5` | Pause after each request, per concurrent slot. |
+| `-n`, `--dry-run` | off | Report planned changes without modifying files. |
+| `-v`, `--verbose` | off | Debug logging and per-file results. |
+| `-q`, `--quiet` | off | Warnings and errors only. |
+| `--version` | — | Print the version and exit. |
+
+**Exit codes:** `0` if every file was processed without failure (for a single file: it was recognized); `1` if at least one file failed, the path does not exist, or a single file was skipped or not recognized; `130` if interrupted.
+
+## Filename templates
+
+| Placeholder | Value | When missing |
+|---|---|---|
+| `{artist}` | Artist | — |
+| `{title}` | Track title | — |
+| `{album}` | Album | `Unknown` |
+| `{year}` | Release year | `Unknown` |
+| `{genre}` | Primary genre | `Unknown` |
+| `{track}` | Track number | `00` (Shazam does not return track numbers) |
+
+- The file keeps its own extension. A trailing audio extension in the template (such as `.mp3`) is replaced by the real one, so `{artist} - {title}` and `{artist} - {title}.mp3` both rename `song.flac` to `Artist - Title.flac`.
+- A `/` in the template creates subdirectories, for example `{artist}/{album}/{title}`.
+- In placeholder values, the characters `< > : " / \ | ? *` and control characters are replaced with `_`. Leading and trailing spaces and dots are removed, and values are truncated to 200 characters.
+
+## Supported formats
+
+| Format | Recognition | Tags | Needs FFmpeg |
+|---|---|---|---|
+| MP3 | yes | ID3 | no |
+| FLAC | yes | Vorbis comments | no |
+| OGG Vorbis | yes | Vorbis comments | no |
+| Opus | yes | Vorbis comments | yes |
+| M4A | yes | MP4 atoms | yes |
+| WAV | yes | not written | no |
+| AAC | yes | not written | yes |
+| WMA | yes | not written | yes |
+
+Files whose tags are not written are still recognized, renamed and moved. Use `--convert` if MP3 output with tags is preferred.
+
+## Reports
+
+Reports are written in directory mode with `-o report.json` or `-o report.csv`.
+
+- **JSON** contains summary counters (`total`, `processed`, `recognized`, `failed`, `skipped`, `success_rate`, `duration_seconds`) and one entry per file with its original path, final path, status, error and recognized metadata.
+- **CSV** contains one row per file: `original_path`, `final_path`, `status`, `artist`, `title`, `album`, `error`.
+
+Because `-o` accepts a single value, a report and an output directory cannot be produced in the same run.
+
+## Python API
+
+The API is asynchronous.
 
 ```python
 import asyncio
-from music_recognition import MusicRecognizer, recognize_and_tag
+from music_recognition import MusicRecognizer
 
-# Simple one-liner
-asyncio.run(recognize_and_tag("/music", rename=True))
 
-# Full control
-async def process_collection():
+async def main() -> None:
     recognizer = MusicRecognizer(
-        max_concurrent=5,
-        delay_between_requests=0.5,
+        max_concurrent=5,             # simultaneous Shazam requests
+        delay_between_requests=0.5,   # pause after each request, per slot
+        retry_attempts=2,             # retries after the first attempt
+        use_cache=True,
+        cache_path=None,              # default: ~/.music_recognition/cache.db
     )
-    
+
     stats = await recognizer.process_directory(
-        source_dir="/music",
-        output_dir="/sorted",
+        source_dir="/music/unsorted",
+        output_dir="/music/sorted",
         write_tags=True,
         rename=True,
-        rename_template="{artist} - {title}.mp3",
+        rename_template="{artist} - {title}",
         organize=True,
+        overwrite_tags=False,
         skip_recognized=True,
+        convert_formats=False,
+        delete_source=False,
         dry_run=False,
+        progress_callback=lambda done, total, result: print(f"{done}/{total} {result.status}"),
     )
-    
-    print(f"Recognized: {stats.recognized}/{stats.processed}")
-    print(f"Success rate: {stats.success_rate:.1f}%")
 
-asyncio.run(process_collection())
+    print(f"{stats.recognized}/{stats.processed} recognized, {stats.failed} failed")
+
+
+asyncio.run(main())
 ```
 
-## ⚙️ CLI Options
+- `process_file(file_path, ...)` processes a single file with the same options, except conversion. It returns a `ProcessingResult`.
+- `recognize_file(file_path)` only recognizes a file and returns a `TrackInfo`.
+- `recognize_and_tag(path, rename=False, organize=False, output_dir=None)` is a shortcut for a file or a directory with default settings.
 
-```
-usage: music-recognize [-h] [-o PATH] [--rename] [--template TPL] [--organize]
-                       [--overwrite] [-f] [--convert] [--delete-source]
-                       [-c N] [--delay SEC] [-n] [-v] [-q]
-                       path
+`ProcessingStats` exposes `total`, `processed`, `recognized`, `failed`, `skipped`, `success_rate`, `duration_seconds`, `results` and `to_dict()`.
 
-Arguments:
-  path                    File or directory to process
+## Safety
 
-Options:
-  -o, --output PATH       Output directory or report file (.json/.csv)
-  --rename                Rename files based on metadata
-  --template TPL          Filename template (default: "{artist} - {title}.mp3")
-  --organize              Organize files into Artist/Album folders
-  --overwrite             Overwrite existing ID3 tags
-  -f, --force             Process files even if they have valid tags
-  --convert               Convert non-MP3 files to MP3, keeping the source
-  --delete-source         With --convert: delete the source after conversion
-  -c, --concurrent N      Max concurrent requests (default: 5)
-  --delay SEC             Delay between requests (default: 0.5)
-  -n, --dry-run           Preview changes without modifying files
-  -v, --verbose           Verbose output
-  -q, --quiet             Minimal output
-```
+- Run with `--dry-run` first, and use a copy of the collection for the first real run.
+- Changes are not journaled and cannot be undone automatically. A wrong match from Shazam is written to tags and file names as is.
+- With `-o DIR`, files are **moved**, not copied.
+- No file is deleted unless `--convert --delete-source` is given.
 
-### Template Placeholders
+## Limitations
 
-| Placeholder | Description | Example |
-|-------------|-------------|---------|
-| `{artist}` | Artist name | Queen |
-| `{title}` | Track title | Bohemian Rhapsody |
-| `{album}` | Album name | A Night at the Opera |
-| `{year}` | Release year | 1975 |
-| `{genre}` | Genre | Rock |
-| `{track}` | Track number | 01 |
+- Recognition uses [ShazamIO](https://github.com/shazamio/ShazamIO), an unofficial client for Shazam's private API. The API may change or rate-limit requests without notice. If requests start failing, lower `--concurrent` or increase `--delay`.
+- Matches are not verified. Short, noisy or live recordings may be misidentified.
+- Shazam returns limited metadata: no track numbers, and the album of a track is sometimes a single or a compilation.
+- Running `--convert` again over the same directory creates another MP3 for each source file it keeps.
 
-The file keeps its real extension: `{artist} - {title}` and `{artist} - {title}.mp3` both rename `song.flac` to `Artist - Title.flac`.
-
-## 📊 Output Example
-
-```
-╔══════════════════════════════════════════════════════════════╗
-║  🎵 Music Recognition v1.2.2                                 ║
-║  Identify • Tag • Rename • Organize                          ║
-╚══════════════════════════════════════════════════════════════╝
-
-Processing: /music/old_collection
-Actions: tag, rename
-
-[150/150] 100.0% ✓ Unknown Track.mp3
-
-══════════════════════════════════════════════════
-  SUMMARY
-══════════════════════════════════════════════════
-  Total files:    150
-  Processed:      150
-  Recognized:     142
-  Failed:         5
-  Skipped:        3
-  Success rate:   94.7%
-  Duration:       125.3s
-══════════════════════════════════════════════════
-```
-
-## 🎯 Use Cases
-
-- **Digital hoarders**: 50GB folder of `Track01.mp3` from 2005
-- **DJs**: Tracks from old mixtapes without metadata
-- **Media server admins**: Plex/Jellyfin shows "Unknown Artist"
-- **Music collectors**: Vinyl rips without proper tags
-
-## 🔧 Supported Formats
-
-| Format | Read | Convert to MP3 |
-|--------|------|----------------|
-| MP3 | ✅ | — |
-| WAV | ✅ | ✅ |
-| FLAC | ✅ | ✅ |
-| M4A | ✅ | ✅ |
-| OGG | ✅ | ✅ |
-| OPUS | ✅ | ✅ |
-
-Tags are written to MP3 (ID3), FLAC/OGG/Opus (Vorbis comments) and M4A (MP4 atoms). WAV, AAC and WMA files are recognized, renamed and organized, but their tags are left untouched.
-
-## 🧪 Development
+## Development
 
 ```bash
-# Install with dev dependencies
+git clone https://github.com/formeo/music_recognition.git
+cd music_recognition
 pip install -e ".[dev]"
-
-# Run tests
-pytest -v
-
-# Run tests with coverage
-pytest --cov=music_recognition --cov-report=html
-
-# Format code
-black src/
-isort src/
+pytest
 ```
 
-## 📄 License
+Tests that operate on real audio files require FFmpeg and are skipped without it. Shazam is mocked in tests; no network access is needed.
 
-MIT License — use freely.
+Changes are listed in [CHANGELOG.md](CHANGELOG.md).
 
-## 🙏 Credits
+## License
 
-- [ShazamIO](https://github.com/dotX12/ShazamIO) — Python Shazam API wrapper
-- [Mutagen](https://github.com/quodlibet/mutagen) — Audio metadata library
-- [PyDub](https://github.com/jiaaro/pydub) — Audio format conversion
-
----
-
-**Like this project?** Give it a ⭐ on [GitHub](https://github.com/formeo/music_recognition)!
+[MIT](LICENSE). Built on [ShazamIO](https://github.com/shazamio/ShazamIO), [Mutagen](https://github.com/quodlibet/mutagen) and [pydub](https://github.com/jiaaro/pydub).
