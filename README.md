@@ -24,6 +24,7 @@ Typical use: a large collection of files named `Track01.mp3`, vinyl rips, or any
 - [Safety](#safety)
 - [Limitations](#limitations)
 - [Development](#development)
+- [Support](#support)
 - [License](#license)
 
 ## Features
@@ -236,6 +237,10 @@ pytest
 Tests that operate on real audio files require FFmpeg and are skipped without it. Shazam is mocked in tests; no network access is needed.
 
 Changes are listed in [CHANGELOG.md](CHANGELOG.md).
+
+## Support
+
+If the tool saves you time, you can support its development on [Boosty](https://boosty.to/formeo).
 
 ## License
 

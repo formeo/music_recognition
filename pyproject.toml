@@ -52,6 +52,7 @@ Homepage = "https://github.com/formeo/music_recognition"
 Repository = "https://github.com/formeo/music_recognition"
 Issues = "https://github.com/formeo/music_recognition/issues"
 Changelog = "https://github.com/formeo/music_recognition/blob/main/CHANGELOG.md"
+Funding = "https://boosty.to/formeo"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/music_recognition"]
